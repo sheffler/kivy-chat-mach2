@@ -1,0 +1,15 @@
+[project]
+name = "kivy-client-mach2"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "kivy>=2.3.1",
+    "nlip-client",
+    "nlip-sdk",
+]
+
+[tool.uv.sources]
+nlip-sdk = { git = "https://github.com/nlip-project/nlip_sdk.git" }
+nlip-client = { git = "https://github.com/sheffler/nlip_client.git" }
