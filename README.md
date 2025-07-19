@@ -1,7 +1,7 @@
 
 # NLIP Kivy Client
 
-Chat client built using Kivy and spaking NLIP protocol
+Chat client built using Kivy and speaking NLIP protocol
 
 - text
 - images
