@@ -1,4 +1,14 @@
-# main.py
+#
+# Kivy based chat application for NLIP project
+#  sends and receives text messages with an optional image too
+#
+# For standalone development, set USE_MOCKS_ERVER=True to use mock server with canned responses
+#
+
+
+USE_MOCK_SERVER = False
+
+
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.scrollview import ScrollView
@@ -18,12 +28,15 @@ from datetime import datetime
 from typing import List, Callable, Optional
 import random
 import os
+import asyncio
+
+# local
+import utils
 
 # import NLIP
 from nlip_client.nlip_client import NLIP_HTTPX_Client
 from nlip_sdk.nlip import NLIP_Factory
 from urllib.parse import urlparse
-
 
 # Domain Models
 @dataclass
@@ -40,6 +53,150 @@ class Message:
         if self.timestamp is None:
             self.timestamp = datetime.now()
 
+#
+# Mock Chat Bot Service delivers canned responses.
+#
+
+class MockChatBotService:
+    """Service: Handles chatbot response generation"""
+    
+    def __init__(self):
+        self.client = None
+        
+        self._text_responses = [
+            "Thanks for your message!",
+            "That's interesting. Tell me more.",
+            "I understand what you're saying.",
+            "Let me think about that for a moment...",
+            "That's a great point!",
+            "I see what you mean.",
+            "Could you elaborate on that?",
+            "That makes sense to me."
+        ]
+        
+        self._image_responses = [
+            "Nice image! Thanks for sharing.",
+            "That's a great photo!",
+            "I can see the image you shared.",
+            "Interesting picture!",
+            "Thanks for the visual!",
+            "What a lovely image!",
+            "Great shot!",
+            "Beautiful picture!"
+        ]
+
+    #
+    # Make a connection and return a status string
+    #
+    
+    async def connect_to_server(self, url):
+        """Connect to the server and return a message"""
+        try:
+            parsed_url = urlparse(url)
+            host = parsed_url.hostname
+            port = parsed_url.port
+        except Exception as e:
+            instance.text = f"Exception: {e}"
+            return
+
+        # Establish the URL and return a connection message
+        await asyncio.sleep(1.0)
+        self.client = NLIP_HTTPX_Client.create_from_url(f"http://{host}:{port}/nlip/")   
+        return f"Connected to http://{host}:{port}/"
+                
+    
+    def generate_response_to_text(self, user_message: Message) -> str:
+        """Generate a response to a text message"""
+        # Simple keyword-based responses (could be replaced with AI)
+        content_lower = user_message.content.lower()
+        
+        if "hello" in content_lower or "hi" in content_lower:
+            return "Hello! How are you doing today?"
+        elif "how" in content_lower and "you" in content_lower:
+            return "I'm doing well, thank you for asking!"
+        elif "thank" in content_lower:
+            return "You're very welcome!"
+        elif "?" in user_message.content:
+            return "That's a great question! Let me think about that."
+        else:
+            return random.choice(self._text_responses)
+    
+    def generate_response_to_image(self, user_message: Message) -> str:
+        """Generate a response to an image message"""
+        filename = os.path.basename(user_message.image_path) if user_message.image_path else ""
+        file_ext = filename.split('.')[-1].lower() if '.' in filename else ""
+        
+        if file_ext in ['jpg', 'jpeg']:
+            return "Nice JPEG image! The quality looks great."
+        elif file_ext == 'png':
+            return "PNG format - perfect for clear images!"
+        elif file_ext == 'gif':
+            return "A GIF! I love animated images."
+        else:
+            return random.choice(self._image_responses)
+
+    # return text response and None image path
+    async def generate_response(self, user_message: Message) -> (str, Optional[str]):
+        """Generate appropriate response based on message type"""
+        image_path = None
+        await asyncio.sleep(1.0)
+
+        if user_message.message_type == "text":
+            return (self.generate_response_to_text(user_message), image_path)
+        elif user_message.message_type == "image":
+            return (self.generate_response_to_image(user_message), image_path)
+        else:
+            return ("I received your message!", image_path)
+
+
+#
+# NLIP Chat Bot Service sends/receives messages to an NLIP Server.
+# Server credentials must be set before use.
+#
+
+class NlipChatBotService:
+    """Service: Handles chatbot response generation"""
+    
+    def __init__(self):
+        self.client = None
+        
+    #
+    # Make a connection and return a status string
+    #
+    
+    async def connect_to_server(self, url):
+        """Connect to the server and return a message"""
+        try:
+            parsed_url = urlparse(url)
+            host = parsed_url.hostname
+            port = parsed_url.port
+        except Exception as e:
+            instance.text = f"Exception: {e}"
+            return
+
+        # Establish the URL and return a connection message
+        await asyncio.sleep(1.0)
+        self.client = NLIP_HTTPX_Client.create_from_url(f"http://{host}:{port}/nlip/")   
+        return f"Connected to http://{host}:{port}/"
+
+    def error_connection_response(self):
+        msg = f"[b]No connection to server[/b].\nPlease enter http://hostname:port/ information"
+        return msg
+                
+    
+    async def generate_response(self, user_message: Message) -> (str, Optional[str]):
+
+        # make sure the client is created
+        if (self.client is None):
+            msg = self.error_connection_response()
+            return (msg, None)
+        
+        nlip_message = utils.messageToNlipMessage(user_message)
+        # print(f"NLIP:{nlip_message}")
+        resp = await self.client.async_send(nlip_message)
+        # print(f"RESP:{resp}")
+        (content, image_path) = utils.nlipMessageExtractParts(resp)
+        return (content, image_path)
 
 # Services
 class MessageService:
@@ -104,72 +261,6 @@ class MessageService:
         self._messages.clear()
 
 
-class ChatBotService:
-    """Service: Handles chatbot response generation"""
-    
-    def __init__(self):
-        self._text_responses = [
-            "Thanks for your message!",
-            "That's interesting. Tell me more.",
-            "I understand what you're saying.",
-            "Let me think about that for a moment...",
-            "That's a great point!",
-            "I see what you mean.",
-            "Could you elaborate on that?",
-            "That makes sense to me."
-        ]
-        
-        self._image_responses = [
-            "Nice image! Thanks for sharing.",
-            "That's a great photo!",
-            "I can see the image you shared.",
-            "Interesting picture!",
-            "Thanks for the visual!",
-            "What a lovely image!",
-            "Great shot!",
-            "Beautiful picture!"
-        ]
-    
-    def generate_response_to_text(self, user_message: Message) -> str:
-        """Generate a response to a text message"""
-        # Simple keyword-based responses (could be replaced with AI)
-        content_lower = user_message.content.lower()
-        
-        if "hello" in content_lower or "hi" in content_lower:
-            return "Hello! How are you doing today?"
-        elif "how" in content_lower and "you" in content_lower:
-            return "I'm doing well, thank you for asking!"
-        elif "thank" in content_lower:
-            return "You're very welcome!"
-        elif "?" in user_message.content:
-            return "That's a great question! Let me think about that."
-        else:
-            return random.choice(self._text_responses)
-    
-    def generate_response_to_image(self, user_message: Message) -> str:
-        """Generate a response to an image message"""
-        filename = os.path.basename(user_message.image_path) if user_message.image_path else ""
-        file_ext = filename.split('.')[-1].lower() if '.' in filename else ""
-        
-        if file_ext in ['jpg', 'jpeg']:
-            return "Nice JPEG image! The quality looks great."
-        elif file_ext == 'png':
-            return "PNG format - perfect for clear images!"
-        elif file_ext == 'gif':
-            return "A GIF! I love animated images."
-        else:
-            return random.choice(self._image_responses)
-    
-    def generate_response(self, user_message: Message) -> str:
-        """Generate appropriate response based on message type"""
-        if user_message.message_type == "text":
-            return self.generate_response_to_text(user_message)
-        elif user_message.message_type == "image":
-            return self.generate_response_to_image(user_message)
-        else:
-            return "I received your message!"
-
-
 # UI Components
 class MessageBubble(BoxLayout):
     """UI Component: Visual representation of a message"""
@@ -209,7 +300,7 @@ class MessageBubble(BoxLayout):
         message_label.bind(size=update_text_size)
         Clock.schedule_once(lambda dt: update_text_size(message_label), 0.1)
     
-# TOM: 
+# TOM: replace with dynamic size calculations
 #    def _setup_image_message(self):
 #        """Configure image message bubble"""
 #        container = self.ids.message_container
@@ -265,8 +356,7 @@ class ChatHistory(ScrollView):
 
 class UrlInput(BoxLayout):
     """UI Component: Input area for composing messages"""
-    on_send_callback = ObjectProperty(allownone=True)
-    on_image_callback = ObjectProperty(allownone=True)
+    chatbot_service = ObjectProperty(allownone=True)
     
     def on_enter_pressed(self, instance):
         """Handle Enter key press"""
@@ -274,24 +364,12 @@ class UrlInput(BoxLayout):
         if not instance.text.strip():
             return
 
-        self.connect_to_server(instance, instance.text.strip())
-    
-    def connect_to_server(self, instance, url):
-        # host = ""
-        # port = 65
-        try:
-            parsed_url = urlparse(url)
-            host = parsed_url.hostname
-            port = parsed_url.port
-        except Exception as e:
-            instance.text = f"Exception: {e}"
-            return
+        async def doit():
+            instance.text = await self.chatbot_service.connect_to_server(instance.text.strip())
 
-        # Not bad.  embryonic starter for establishing the URL
-        instance.text = f"Connected to {host}:{port}"
+        asyncio.create_task(doit())
         
-
-
+    
 class MessageInput(BoxLayout):
     """UI Component: Input area for composing messages"""
     on_send_callback = ObjectProperty(allownone=True)
@@ -371,13 +449,19 @@ class ChatInterface(BoxLayout):
     def __init__(self, **kwargs):
         # Initialize services BEFORE calling super() so they're available during KV loading
         self.message_service = MessageService()
-        self.chatbot_service = ChatBotService()
+        if USE_MOCK_SERVER:
+            self.chatbot_service = MockChatBotService()
+        else:
+            self.chatbot_service = NlipChatBotService()
         super().__init__(**kwargs)
-    
+
     def on_kv_post(self, base_widget):
         """Called after the kv file is loaded"""
         # Inject message service dependency into chat history
         self.ids.chat_history.message_service = self.message_service
+
+        # Inject chatbotservice into the url input
+        self.ids.url_input.chatbot_service = self.chatbot_service
         
         # Set up message input callbacks
         self.ids.message_input.on_send_callback = self.handle_send_message
@@ -390,9 +474,16 @@ class ChatInterface(BoxLayout):
         """Handle sending a new text message"""
         # Create user message through service
         user_message = self.message_service.create_text_message(message_text, is_user=True)
+
+        async def doit():
+            response_text , image_path = await self.chatbot_service.generate_response(user_message)
+            if image_path == None:
+                self.message_service.create_text_message(response_text, is_user=False)
+            else:
+                self.message_service.create_image_message(response_text, image_path, is_user=False)
+
+        asyncio.create_task(doit())
         
-        # Generate bot response
-        Clock.schedule_once(lambda dt: self._generate_bot_response(user_message), 1.0)
     
     def handle_image_upload(self, *args):
         """Handle image upload request"""
@@ -410,9 +501,16 @@ class ChatInterface(BoxLayout):
             image_path=image_path,
             is_user=True
         )
+
+        async def doit():
+            response_text, image_path = await self.chatbot_service.generate_response(user_message)
+            if image_path == None:
+                self.message_service.create_text_message(response_text, is_user=False)
+            else:
+                self.message_service.create_image_message(response_text, image_path, is_user=False)
         
-        # Generate bot response to image
-        Clock.schedule_once(lambda dt: self._generate_bot_response(user_message), 1.0)
+        asyncio.create_task(doit())
+
     
     def _generate_bot_response(self, user_message: Message):
         """Generate and send bot response"""
@@ -447,4 +545,7 @@ class ChatApp(App):
 
 
 if __name__ == '__main__':
-    ChatApp().run()
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(ChatApp().async_run(async_lib='asyncio'))
+    loop.close()
+    
