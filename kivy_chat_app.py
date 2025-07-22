@@ -468,7 +468,9 @@ class ChatInterface(BoxLayout):
         self.ids.message_input.on_image_callback = self.handle_image_upload
         
         # Add sample messages
-        self._add_sample_messages()
+        self._add_welcome_messages()
+        if USE_MOCK_SERVER:
+            self._add_sample_messages()
     
     def handle_send_message(self, message_text: str):
         """Handle sending a new text message"""
@@ -517,10 +519,21 @@ class ChatInterface(BoxLayout):
         response_text = self.chatbot_service.generate_response(user_message)
         self.message_service.create_text_message(response_text, is_user=False)
     
-    def _add_sample_messages(self):
+    def _add_welcome_messages(self):
         """Add sample messages to demonstrate the interface"""
         sample_data = [
             ("Hello! Welcome to the chat interface.", "text", None, False),
+        ]
+        
+        for content, msg_type, img_path, is_user in sample_data:
+            if msg_type == "text":
+                self.message_service.create_text_message(content, is_user)
+            elif msg_type == "image":
+                self.message_service.create_image_message(content, img_path, is_user)
+
+    def _add_sample_messages(self):
+        """Add sample messages to demonstrate the interface"""
+        sample_data = [
             ("Hi there! This looks great.", "text", None, True),
             ("This is a longer message to demonstrate how the text wrapping works in the message bubbles. As you can see, it automatically adjusts the height based on the content length.", "text", None, False),
             ("Perfect! The bubbles resize nicely and the text is easy to read.", "text", None, True),
