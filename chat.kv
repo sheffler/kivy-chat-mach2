@@ -90,16 +90,6 @@
             size: self.size
             radius: [5]
     
-    # Image upload button
-    Button:
-        text: '📷'
-        size_hint_x: None
-        width: '50sp'
-        font_size: '20sp'
-        background_color: 0.7, 0.7, 0.7, 1
-        color: 1, 1, 1, 1
-        on_press: root.open_image_chooser()
-    
     TextInput:
         id: text_input
         multiline: True
@@ -119,6 +109,19 @@
         color: 1, 1, 1, 1
         on_press: root.send_message()
 
+    # Image upload button
+    Button:
+        # text: '📷'
+        text: 'Send + Image'
+        # size_hint_x: None
+        # width: '50sp'
+        size_hint_x: 0.2
+        # font_size: '20sp'
+        font_size: '14sp'
+        background_color: 0.7, 0.7, 0.7, 1
+        color: 1, 1, 1, 1
+        on_press: root.open_image_chooser()
+    
 <UrlInput>:
     orientation: 'horizontal'
     size_hint_y: None
