@@ -4,6 +4,7 @@
 
 from kivy_chat_app import Message
 from nlip_sdk.nlip import NLIP_Message, NLIP_Factory
+from nlip_sdk.nlip import AllowedFormats
 
 import os
 import tempfile
@@ -68,11 +69,30 @@ def nlipMessageExtractImagePath(nlip_message: NLIP_Message):
 # Find text content in primary message and the first attached image.  Return
 # a local file path for the saved image that can be used with Kivy.
 #
+# Apply simple Kivy formatting for special message parts.
+#
+# Our NLIP Agents format some parts in special ways.
+#   - tool calls begin with: "[Calling ..."
+#
 
 def nlipMessageExtractParts(nlip_message: NLIP_Message):
 
-    # find some text in the message
-    content = nlip_message.extract_text()
+    # find the text parts in the message and join
+    if nlip_message.format == AllowedFormats.text:
+        content = nlip_message.content # the main part
+    else:
+        content = ""
+
+    if nlip_message.submessages:
+        for msg in nlip_message.submessages: # sub-parts
+            if msg.format == AllowedFormats.text:
+                s = msg.content
+                # Apply formatting if appropriate
+                if s.startswith("[Calling"):
+                    content += f"\n\n[b]{s}[/b]"
+                else:
+                    content += f"\n\n{s}"
+
     image_path = nlipMessageExtractImagePath(nlip_message)
 
     return (content, image_path)
