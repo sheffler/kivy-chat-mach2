@@ -9,8 +9,8 @@
     
     # Left spacer for user messages (right alignment)
     Widget:
-        size_hint_x: 0.3 if root.is_user else 0
-        width: 0 if not root.is_user else self.size_hint_x
+        size_hint_x: root.left_size_hint_x()
+        width: root.left_width()
     
     # Message container with bubble styling
     BoxLayout:
@@ -18,13 +18,13 @@
         orientation: 'vertical'
         size_hint_y: None
         # size_hint_x: None
-        size_hint_x: 0.7
+        size_hint_x: root.message_size_hint_x()
         width: self.minimum_width
         height: '40sp'
         
         canvas.before:
             Color:
-                rgba: (0.85, 0.92, 1, 1) if root.is_user else (0.95, 0.95, 0.95, 1)
+                rgba: root.bubble_color()
             RoundedRectangle:
                 pos: self.pos
                 size: self.size
@@ -41,7 +41,7 @@
                 text: root.message_text
                 font_size: '14sp'
                 text_size: self.width, None
-                halign: 'right' if root.is_user else 'left'
+                halign: root.bubble_halign()
                 valign: 'middle'
                 color: 0.2, 0.2, 0.2, 1
                 markup: True
@@ -60,8 +60,8 @@
     
     # Right spacer for non-user messages (left alignment)  
     Widget:
-        size_hint_x: 0.3 if not root.is_user else 0
-        width: 0 if root.is_user else self.size_hint_x
+        size_hint_x: root.right_size_hint_x()
+        width: root.right_width()
 
 <ChatHistory>:
     do_scroll_x: False
@@ -147,7 +147,7 @@
         cursor_color: 0.3, 0.5, 0.8, 1
         size_hint_x: 0.7
         on_text_validate: root.on_enter_pressed(self)
-    
+        
 
 <ChatInterface>:
     orientation: 'vertical'

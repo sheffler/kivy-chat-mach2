@@ -46,7 +46,7 @@ class Message:
     content: str
     message_type: str  # "text" or "image"
     image_path: Optional[str] = None
-    is_user: bool = True
+    role: str = "user" # user, assistant, system, status
     timestamp: datetime = None
     
     def __post_init__(self):
@@ -221,20 +221,20 @@ class MessageService:
         for observer in self._observers:
             observer(message)
     
-    def create_text_message(self, content: str, is_user: bool = True) -> Message:
+    def create_text_message(self, content: str, role:str = "user") -> Message:
         """Create a new text message"""
         self._message_counter += 1
         message = Message(
             id=f"msg_{self._message_counter}",
             content=content,
             message_type="text",
-            is_user=is_user
+            role=role
         )
         self._messages.append(message)
         self._notify_observers(message)
         return message
     
-    def create_image_message(self, content: str, image_path: str, is_user: bool = True) -> Message:
+    def create_image_message(self, content: str, image_path: str, role: str = "user") -> Message:
         """Create a new image message"""
         self._message_counter += 1
         message = Message(
@@ -242,7 +242,7 @@ class MessageService:
             content=content,
             message_type="image",
             image_path=image_path,
-            is_user=is_user
+            role=role
         )
         self._messages.append(message)
         self._notify_observers(message)
@@ -267,15 +267,87 @@ class MessageBubble(BoxLayout):
     message_text = StringProperty("")
     message_type = StringProperty("text")
     image_source = StringProperty("")
-    is_user = BooleanProperty(True)
+    role = StringProperty("user")
     
     def __init__(self, message: Message, **kwargs):
         self.message_text = message.content
         self.message_type = message.message_type
         self.image_source = message.image_path or ""
-        self.is_user = message.is_user
+        self.role = message.role
         super().__init__(**kwargs)
         self._setup_bubble()
+
+    # Left spacer properties
+    def left_size_hint_x(self):
+        if self.role == "user":
+            return 0.3
+        elif self.role == "assistant":
+            return 0
+        elif self.role == "system":
+            return 0.25
+        elif self.role == "status":
+            return 0.25
+        else:
+            return 0.15
+
+    def left_width(self):
+        return self.left_size_hint_x()
+
+    # Right space properties
+    def right_size_hint_x(self):
+        if self.role == "user":
+            return 0
+        elif self.role == "assistant":
+            return 0.3
+        elif self.role == "system":
+            return 0.25
+        elif self.role == "status":
+            return 0.25
+        else:
+            return 0.15
+
+    def right_width(self):
+        return self.right_size_hint_x()
+
+    # Message
+    def message_size_hint_x(self):
+        if self.role == "user":
+            return 0.7
+        elif self.role == "assistant":
+            return 0.7
+        elif self.role == "system":
+            return 0.5
+        elif self.role == "status":
+            return 0.5
+        else:
+            return 0.7
+
+    # Bubble color
+    def bubble_color(self):
+        if self.role == "user":
+            return (0.85, 0.92, 1, 1)
+        elif self.role == "assistant":
+            return (0.95, 0.95, 0.95, 1)
+        elif self.role == "system":
+            return (0.85, 0.95, 0.85, 1)
+        elif self.role == "status":
+            return (0.85, 0.95, 0.85, 1)
+        else:
+            return (0.85, 0.85, 0.85, 1)
+
+    def bubble_halign(self):
+        if self.role == "user":
+            return "right"
+        elif self.role == "assistant":
+            return "left"
+        elif self.role == "system":
+            return "center"
+        elif self.role == "status":
+            return "center"
+        else:
+            return "center"
+
+    
     
     def _setup_bubble(self):
         """Configure the message bubble appearance and behavior"""
@@ -357,6 +429,7 @@ class ChatHistory(ScrollView):
 class UrlInput(BoxLayout):
     """UI Component: Input area for composing messages"""
     chatbot_service = ObjectProperty(allownone=True)
+    message_service = ObjectProperty(allownone=True)
     
     def on_enter_pressed(self, instance):
         """Handle Enter key press"""
@@ -365,16 +438,17 @@ class UrlInput(BoxLayout):
             return
 
         async def doit():
-            instance.text = await self.chatbot_service.connect_to_server(instance.text.strip())
+            instance.text = instance.text.strip()
+            await self.chatbot_service.connect_to_server(instance.text)
+            self.message_service.create_text_message(f"Connected to {instance.text}", role="status")
 
         asyncio.create_task(doit())
-        
-    
+
 class MessageInput(BoxLayout):
     """UI Component: Input area for composing messages"""
     on_send_callback = ObjectProperty(allownone=True)
     on_image_callback = ObjectProperty(allownone=True)
-    
+
     def on_enter_pressed(self, instance):
         """Handle Enter key press"""
         if not instance.text.strip():
@@ -462,6 +536,7 @@ class ChatInterface(BoxLayout):
 
         # Inject chatbotservice into the url input
         self.ids.url_input.chatbot_service = self.chatbot_service
+        self.ids.url_input.message_service = self.message_service
         
         # Set up message input callbacks
         self.ids.message_input.on_send_callback = self.handle_send_message
@@ -475,14 +550,14 @@ class ChatInterface(BoxLayout):
     def handle_send_message(self, message_text: str):
         """Handle sending a new text message"""
         # Create user message through service
-        user_message = self.message_service.create_text_message(message_text, is_user=True)
+        user_message = self.message_service.create_text_message(message_text, role="user")
 
         async def doit():
             response_text , image_path = await self.chatbot_service.generate_response(user_message)
             if image_path == None:
-                self.message_service.create_text_message(response_text, is_user=False)
+                self.message_service.create_text_message(response_text, role="assistant")
             else:
-                self.message_service.create_image_message(response_text, image_path, is_user=False)
+                self.message_service.create_image_message(response_text, image_path, role="assistant")
 
         asyncio.create_task(doit())
         
@@ -501,15 +576,15 @@ class ChatInterface(BoxLayout):
         user_message = self.message_service.create_image_message(
             content= default_content if len(explicit_content) == 0 else explicit_content,
             image_path=image_path,
-            is_user=True
+            role="user"
         )
 
         async def doit():
             response_text, image_path = await self.chatbot_service.generate_response(user_message)
             if image_path == None:
-                self.message_service.create_text_message(response_text, is_user=False)
+                self.message_service.create_text_message(response_text, role="assistant")
             else:
-                self.message_service.create_image_message(response_text, image_path, is_user=False)
+                self.message_service.create_image_message(response_text, image_path, role="assistant")
         
         asyncio.create_task(doit())
 
@@ -517,33 +592,34 @@ class ChatInterface(BoxLayout):
     def _generate_bot_response(self, user_message: Message):
         """Generate and send bot response"""
         response_text = self.chatbot_service.generate_response(user_message)
-        self.message_service.create_text_message(response_text, is_user=False)
+        self.message_service.create_text_message(response_text, role="assistant")
     
     def _add_welcome_messages(self):
         """Add sample messages to demonstrate the interface"""
         sample_data = [
-            ("Hello! Welcome to the chat interface.", "text", None, False),
+            ("Hello! Welcome to the chat interface.", "text", None, "assistant"),
         ]
         
-        for content, msg_type, img_path, is_user in sample_data:
+        for content, msg_type, img_path, role in sample_data:
             if msg_type == "text":
-                self.message_service.create_text_message(content, is_user)
+                self.message_service.create_text_message(content, role)
             elif msg_type == "image":
-                self.message_service.create_image_message(content, img_path, is_user)
+                self.message_service.create_image_message(content, img_path, role)
 
     def _add_sample_messages(self):
         """Add sample messages to demonstrate the interface"""
         sample_data = [
-            ("Hi there! This looks great.", "text", None, True),
-            ("This is a longer message to demonstrate how the text wrapping works in the message bubbles. As you can see, it automatically adjusts the height based on the content length.", "text", None, False),
-            ("Perfect! The bubbles resize nicely and the text is easy to read.", "text", None, True),
+            ("Connected to http://sample.com/", "text", None, "status"),
+            ("Hi there! This looks great.", "text", None, "user"),
+            ("This is a longer message to demonstrate how the text wrapping works in the message bubbles. As you can see, it automatically adjusts the height based on the content length.", "text", None, "assistant"),
+            ("Perfect! The bubbles resize nicely and the text is easy to read.", "text", None, "user"),
         ]
         
-        for content, msg_type, img_path, is_user in sample_data:
+        for content, msg_type, img_path, role in sample_data:
             if msg_type == "text":
-                self.message_service.create_text_message(content, is_user)
+                self.message_service.create_text_message(content, role)
             elif msg_type == "image":
-                self.message_service.create_image_message(content, img_path, is_user)
+                self.message_service.create_image_message(content, img_path, role)
 
 
 class ChatApp(App):
