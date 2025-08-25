@@ -8,6 +8,8 @@ Chat client built using Kivy and speaking NLIP protocol
 
 ![Mach2 Screenshot](imgs/mach2-1.png)
 
+![Mach2 Screenshot the Second](imgs/mach2-2.png)
+
 
 ## Building
 
@@ -29,7 +31,7 @@ This project works well with `uv`.
 
 ## Usage
 
-By default, the app will connect to the server connection configured in the top input area.  You should enter a string like `http://localhost:8000`, where your NLIP server is listening.
+By default, the app will connect to the server connection configured in the top input area.  You should enter a string like `http://localhost:8000`, where your NLIP server is listening.  Press `[RETURN]`.
 
 
 ## Testing and Development
