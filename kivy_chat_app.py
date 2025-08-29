@@ -32,11 +32,12 @@ import asyncio
 
 # local
 import utils
+from nlip_async_client import NlipAsyncClient
 
 # import NLIP
-from nlip_client.nlip_client import NLIP_HTTPX_Client
 from nlip_sdk.nlip import NLIP_Factory
 from urllib.parse import urlparse
+
 
 # Domain Models
 @dataclass
@@ -91,17 +92,13 @@ class MockChatBotService:
     
     async def connect_to_server(self, url):
         """Connect to the server and return a message"""
-        try:
-            parsed_url = urlparse(url)
-            host = parsed_url.hostname
-            port = parsed_url.port
-        except Exception as e:
-            instance.text = f"Exception: {e}"
-            return
+        parsed_url = urlparse(url)
+        host = parsed_url.hostname
+        port = parsed_url.port
 
         # Establish the URL and return a connection message
         await asyncio.sleep(1.0)
-        self.client = NLIP_HTTPX_Client.create_from_url(f"http://{host}:{port}/nlip/")   
+        self.client = NlipAsyncClient.create_from_url(f"http://{host}:{port}/nlip/")   
         return f"Connected to http://{host}:{port}/"
                 
     
@@ -166,17 +163,13 @@ class NlipChatBotService:
     
     async def connect_to_server(self, url):
         """Connect to the server and return a message"""
-        try:
-            parsed_url = urlparse(url)
-            host = parsed_url.hostname
-            port = parsed_url.port
-        except Exception as e:
-            instance.text = f"Exception: {e}"
-            return
+        parsed_url = urlparse(url)
+        host = parsed_url.hostname
+        port = parsed_url.port
 
         # Establish the URL and return a connection message
         await asyncio.sleep(1.0)
-        self.client = NLIP_HTTPX_Client.create_from_url(f"http://{host}:{port}/nlip/")   
+        self.client = NlipAsyncClient.create_from_url(f"http://{host}:{port}/nlip/")   
         return f"Connected to http://{host}:{port}/"
 
     def error_connection_response(self):
@@ -287,6 +280,8 @@ class MessageBubble(BoxLayout):
             return 0.25
         elif self.role == "status":
             return 0.25
+        elif self.role == "warning":
+            return 0.25
         else:
             return 0.15
 
@@ -302,6 +297,8 @@ class MessageBubble(BoxLayout):
         elif self.role == "system":
             return 0.25
         elif self.role == "status":
+            return 0.25
+        elif self.role == "warning":
             return 0.25
         else:
             return 0.15
@@ -319,6 +316,8 @@ class MessageBubble(BoxLayout):
             return 0.5
         elif self.role == "status":
             return 0.5
+        elif self.role == "warning":
+            return 0.5
         else:
             return 0.7
 
@@ -332,6 +331,8 @@ class MessageBubble(BoxLayout):
             return (0.85, 0.95, 0.85, 1)
         elif self.role == "status":
             return (0.85, 0.95, 0.85, 1)
+        elif self.role == "warning":
+            return (0.95, 0.85, 0.85, 1)
         else:
             return (0.85, 0.85, 0.85, 1)
 
@@ -343,6 +344,8 @@ class MessageBubble(BoxLayout):
         elif self.role == "system":
             return "center"
         elif self.role == "status":
+            return "center"
+        elif self.role == "warning":
             return "center"
         else:
             return "center"
@@ -439,8 +442,12 @@ class UrlInput(BoxLayout):
 
         async def doit():
             instance.text = instance.text.strip()
-            await self.chatbot_service.connect_to_server(instance.text)
-            self.message_service.create_text_message(f"Connected to {instance.text}", role="status")
+            # await self.chatbot_service.connect_to_server(instance.text)
+            try:
+                await self.chatbot_service.connect_to_server(instance.text)
+                self.message_service.create_text_message(f"Connected to {instance.text}", role="status")
+            except Exception as e:
+                self.message_service.create_text_message(f"Exception: {e}", role="warning")
 
         asyncio.create_task(doit())
 
