@@ -164,12 +164,17 @@ class NlipChatBotService:
     async def connect_to_server(self, url):
         """Connect to the server and return a message"""
         parsed_url = urlparse(url)
+        print(f"PARSED:{parsed_url}")
+        scheme = parsed_url.scheme
+        netloc = parsed_url.netloc
         host = parsed_url.hostname
         port = parsed_url.port
 
         # Establish the URL and return a connection message
         await asyncio.sleep(1.0)
-        self.client = NlipAsyncClient.create_from_url(f"http://{host}:{port}/nlip/")   
+        # self.client = NlipAsyncClient.create_from_url(f"http://{host}:{port}/nlip/")   
+        # self.client = NlipAsyncClient.create_from_url(f"https://{host}/nlip/")   
+        self.client = NlipAsyncClient.create_from_url(f"{scheme}://{netloc}/nlip/")   
         return f"Connected to http://{host}:{port}/"
 
     def error_connection_response(self):
