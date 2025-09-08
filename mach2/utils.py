@@ -2,7 +2,7 @@
 # Utilities for converting message types
 #
 
-from kivy_chat_app import Message
+from .models import Message
 from nlip_sdk.nlip import NLIP_Message, NLIP_Factory
 from nlip_sdk.nlip import AllowedFormats
 
