@@ -33,7 +33,7 @@ This project works well with `uv`.
 
 ## Context - NLIP for Natural Language Conversations
 
-NLIP (Natural Language Interaction Protocol) is an open standard for message interchange between intelligent agents.  It is being standardized in [Ecma Technical Committee 56]https://ecma-international.org/technical-committees/tc56/) to enable truly interoperable message exchange. 
+NLIP (Natural Language Interaction Protocol) is an open standard for message interchange between intelligent agents.  It is being standardized in [Ecma Technical Committee 56](https://ecma-international.org/technical-committees/tc56/) to enable truly interoperable message exchange. 
 
 ![NLIP Conversations](pics/mach2-pics-01/Slide1.png)
 
