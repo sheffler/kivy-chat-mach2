@@ -6,9 +6,9 @@ Chat client built using Kivy and speaking [NLIP](https://github.com/nlip-project
 - text
 - images
 
-![Mach2 Screenshot](imgs/mach2-1.png)
+![Mach2 Screenshot](pics/mach2-1.png)
 
-![Mach2 Screenshot the Second](imgs/mach2-2.png)
+![Mach2 Screenshot the Second](pics/mach2-2.png)
 
 
 ## Building
@@ -30,6 +30,19 @@ This project works well with `uv`.
         
     The app is packaged as a Python module.  Be sure to invoke with the "-m" flag as shown.
 		
+
+## Context - NLIP for Natural Language Conversations
+
+NLIP (Natural Language Interaction Protocol) is an open standard for message interchange between intelligent agents.  It is being standardized in [Ecma Technical Committee 56]https://ecma-international.org/technical-committees/tc56/) to enable truly interoperable message exchange. 
+
+![NLIP Conversations](pics/mach2-pics-01/Slide1.png)
+
+
+An NLIP message stream is used to send and receive text messages augmented with media and structured data types.  It is similar in spirit to the message types defined in agent construction toolkits, but is independent from these and its definition is governed through an open community whose goals are interoperability and security.
+
+
+![NLIP Messages](pics/mach2-pics-01/Slide2.png)
+
 
 ## Usage
 
