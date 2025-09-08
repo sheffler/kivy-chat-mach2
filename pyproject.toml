@@ -6,10 +6,9 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "kivy>=2.3.1",
-    "nlip-client",
     "nlip-sdk",
+    "httpx==0.28.1"
 ]
 
 [tool.uv.sources]
 nlip-sdk = { git = "https://github.com/nlip-project/nlip_sdk.git" }
-nlip-client = { git = "https://github.com/sheffler/nlip_client.git" }
