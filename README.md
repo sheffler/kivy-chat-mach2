@@ -60,9 +60,9 @@ Hyperlinks are presented with underlines and clicking them opens a web browser.
 
 ## Testing and Development
 
-Set the following flag to `True` to disable the NLIP server connection.
+Run the app with the "mock" flag to disable real HTTP connections and use mock responses.
 
-    USE_MOCK_SERVER = True
+    $ python -m mach2 -- -m
 	
 When set this way, the app will generate canned responses.  This can be helpful during development, when working on layout or design.
 
