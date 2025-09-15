@@ -53,6 +53,10 @@ Enter text messages in the Message area.  To send a text-only message, press the
 
 To send a message that includes text and an image, first enter the text and then use the `[Send+Image]` button to add an image to the message and then send it.
 
+LLM responses are shown in a bubble on the left.  The `[Copy]` button copies the message text into the clipboard so you can paste it into another application.
+
+Hyperlinks are presented with underlines and clicking them opens a web browser.
+
 
 ## Testing and Development
 
