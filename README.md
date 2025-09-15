@@ -6,6 +6,8 @@ Chat client built using Kivy and speaking [NLIP](https://github.com/nlip-project
 - text
 - images
 
+By default, it renders LLM responses in rich text with hyperlinks enabled.
+
 ![Mach2 Screenshot](pics/mach2-1.png)
 
 ![Mach2 Screenshot the Second](pics/mach2-2.png)
@@ -29,20 +31,19 @@ This project works well with `uv`.
         $ python -m mach2
         
     The app is packaged as a Python module.  Be sure to invoke with the "-m" flag as shown.
+    
+4. Run the app with options.  Kivy intercepts normal argument processing, and arguments for the app need to follow a double hyphen.
+
+        $ python -m mach2 [ kivy args ] -- [ app args ]
+        
+    For instance, to run the app in "plain" mode with Markdown formatting disabled.
+    
+        $ python -m mach2 -- -p
 		
-
-## Context - NLIP for Natural Language Conversations
-
-NLIP (Natural Language Interaction Protocol) is an open standard for message interchange between intelligent agents.  It is being standardized in [Ecma Technical Committee 56](https://ecma-international.org/technical-committees/tc56/) to enable truly interoperable message exchange. 
-
-![NLIP Conversations](pics/mach2-pics-01/Slide1.png)
-
-
-An NLIP message stream is used to send and receive text messages augmented with media and structured data types.  It is similar in spirit to the message types defined in agent construction toolkits, but is independent from these and its definition is governed through an open community whose goals are interoperability and security.
-
-
-![NLIP Messages](pics/mach2-pics-01/Slide2.png)
-
+    To get "help" for the app arguments.
+    
+        $ python -m mach2 -- -h
+		
 
 ## Usage
 
@@ -62,3 +63,21 @@ Set the following flag to `True` to disable the NLIP server connection.
 When set this way, the app will generate canned responses.  This can be helpful during development, when working on layout or design.
 
 
+## Background Information - NLIP for Natural Language Conversations
+
+NLIP (Natural Language Interaction Protocol) is an open standard for message interchange between intelligent agents.  It is being standardized in [Ecma Technical Committee 56](https://ecma-international.org/technical-committees/tc56/) to enable truly interoperable message exchange. 
+
+![NLIP Conversations](pics/mach2-pics-01/Slide1.png)
+
+
+An NLIP message stream is used to send and receive text messages augmented with media and structured data types.  It is similar in spirit to the message types defined in agent construction toolkits, but is independent from these and its definition is governed through an open community whose goals are interoperability and security.
+
+
+![NLIP Messages](pics/mach2-pics-01/Slide2.png)
+
+
+## Screenshots
+
+By default, Mach2 processes each LLM response with a Markdown parser and code formatter.  This capability may be turned off with the "-p" (plain) flag.
+
+![Markdown](pics/mach2-with-formatted-markdown-01.png)
