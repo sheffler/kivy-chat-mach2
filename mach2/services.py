@@ -145,10 +145,20 @@ class NlipChatBotService:
             return (msg, None)
         
         nlip_message = utils.messageToNlipMessage(user_message)
-        # print(f"NLIP:{nlip_message}")
-        resp = await self.client.async_send(nlip_message)
-        # print(f"RESP:{resp}")
-        (content, image_path) = utils.nlipMessageExtractParts(resp)
+
+        resp = None
+        try:
+            resp = await self.client.async_send(nlip_message)
+        except Exception as e:
+            err = f"Error:{e}"
+
+        if resp:
+            (content, image_path) = utils.nlipMessageExtractParts(resp)
+        else:
+            # TODO: use NLIP Parts more effectively to signify errors
+            content = err
+            image_path = None
+
         return (content, image_path)
 
 # Services
