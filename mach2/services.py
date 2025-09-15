@@ -10,7 +10,8 @@ from urllib.parse import urlparse
 from . import utils
 from .models import Message
 from .nlip_async_client import NlipAsyncClient
-
+from .processors.plain_processor import PlainProcessor
+from .processors.mistune_processor import MistuneProcessor
 
 #
 # Mock Chat Bot Service delivers canned responses.
@@ -154,10 +155,15 @@ class NlipChatBotService:
 class MessageService:
     """Service: Manages message operations and state"""
     
-    def __init__(self):
+    def __init__(self, processor_name: str):
         self._messages: List[Message] = []
         self._message_counter = 0
         self._observers: List[Callable[[Message], None]] = []
+
+        if processor_name == 'plain':
+            self.processor = PlainProcessor()
+        else:
+            self.processor = MistuneProcessor()
     
     def add_observer(self, callback: Callable[[Message], None]):
         """Subscribe to message events"""
@@ -176,9 +182,13 @@ class MessageService:
     def create_text_message(self, content: str, role:str = "user") -> Message:
         """Create a new text message"""
         self._message_counter += 1
+
+        formatted = self.processor.process(content, role)
+
         message = Message(
             id=f"msg_{self._message_counter}",
             content=content,
+            formatted=formatted,
             message_type="text",
             role=role
         )
@@ -189,9 +199,13 @@ class MessageService:
     def create_image_message(self, content: str, image_path: str, role: str = "user") -> Message:
         """Create a new image message"""
         self._message_counter += 1
+
+        formatted = self.processor.process(content, role)
+
         message = Message(
             id=f"msg_{self._message_counter}",
             content=content,
+            formatted=formatted,
             message_type="image",
             image_path=image_path,
             role=role
