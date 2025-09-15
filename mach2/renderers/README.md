@@ -22,3 +22,38 @@ Fixed-Width font selection for code assumes that font `RobotoMono-Regular` is pr
 
 Pygments is a code formatter.  It includes a BBCode formatter, which is very close to what Kivy expects as markup.  We needed to override one method to escape left-brackets appropriately.
 
+
+## To Do
+
+**Escape Input Text:**
+
+There may be corner-cases around input text that includes left-brackets ("[") - which denote the introduction of a Kivy markup sequence.
+
+**Looser List Handling:**
+
+Some LLMs generate output that consists of numbered sections with other content following.  This isn't handled quite correctly, because the other content needs to be indented.
+
+Example:
+
+    1. This is the first step
+    
+    ``` objc
+       // code omitted
+    ```
+
+    2. The second step in the process is
+    
+    ``` objc
+       // code omitted
+    ```
+
+    3. The third step in the process is
+    
+    ``` objc
+       // code omitted
+    ```
+
+Mistune recognizes this as three separate, one-item lists, and the numbers all turn into "1.".  Not sure what to do in this case.
+
+    
+    
