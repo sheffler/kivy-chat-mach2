@@ -213,7 +213,7 @@ class BBCodeRenderer(BaseRenderer):
         self._list_push(ordered)
         children = self.render_children(token, state)
         self._list_pop()
-        return f"\n{children.rstrip()}\n"
+        return f"{children.rstrip()}\n\n"
         # return f"\n[list]\n{children.rstrip()}\n[/list]\n"
     
     def strikethrough(self, token, state):
