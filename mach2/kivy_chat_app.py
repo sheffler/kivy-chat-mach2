@@ -2,11 +2,8 @@
 # Kivy based chat application for NLIP project
 #  sends and receives text messages with an optional image too
 #
-# For standalone development, set USE_MOCKS_ERVER=True to use mock server with canned responses
+# For standalone development, use the '-m' flag for the MOCK server.
 #
-
-
-USE_MOCK_SERVER = False
 
 
 from kivy.app import App
@@ -18,6 +15,7 @@ from kivy.uix.label import Label
 from kivy.uix.image import Image
 from kivy.clock import Clock
 from kivy.graphics import Color, RoundedRectangle
+from kivy.core.clipboard import Clipboard
 from kivy.uix.widget import Widget
 from kivy.uix.filechooser import FileChooserIconView
 from kivy.uix.popup import Popup
@@ -26,6 +24,7 @@ from kivy.metrics import sp
 import random
 import os
 import asyncio
+import webbrowser
 
 # local
 from . import utils
@@ -33,22 +32,30 @@ from .models import Message
 from .widgets import TextInputWithShiftReturn
 from .services import MockChatBotService, NlipChatBotService, MessageService
 
-
 # UI Components
 class MessageBubble(BoxLayout):
     """UI Component: Visual representation of a message"""
     message_text = StringProperty("")
+    message_formatted = StringProperty(None) # default value
     message_type = StringProperty("text")
     image_source = StringProperty("")
     role = StringProperty("user")
     
     def __init__(self, message: Message, **kwargs):
         self.message_text = message.content
+        if message.formatted:
+            self.message_formatted = message.formatted
         self.message_type = message.message_type
         self.image_source = message.image_path or ""
         self.role = message.role
         super().__init__(**kwargs)
         self._setup_bubble()
+
+        # remove the 'copy' button for non-assistant messages
+        if message.role != 'assistant':
+            copy = self.ids.click_to_copy
+            copy.parent.remove_widget(copy)
+            
 
     # Left spacer properties
     def left_size_hint_x(self):
@@ -150,7 +157,8 @@ class MessageBubble(BoxLayout):
             instance.texture_update()
             container = self.ids.message_container
             padding_height = self.padding[1] + self.padding[3] if hasattr(self, 'padding') else 20
-            container.height = max(instance.texture_size[1] + padding_height, sp(40))
+            status_height = sp(20)
+            container.height = max(instance.texture_size[1] + padding_height + status_height, sp(40))
         
         message_label.bind(size=update_text_size)
         Clock.schedule_once(lambda dt: update_text_size(message_label), 0.1)
@@ -172,11 +180,17 @@ class MessageBubble(BoxLayout):
             # Update container height based on text (fixed as per your requirements)
             container = self.ids.message_container
             padding_height = self.padding[1] + self.padding[3] if hasattr(self, 'padding') else 20
-            container.height = max(instance.texture_size[1] + padding_height + sp(150), sp(40))
+            status_height = sp(20)
+            container.height = max(instance.texture_size[1] + padding_height + status_height + sp(150), sp(40))
         
         message_label.bind(size=update_text_size)
         Clock.schedule_once(lambda dt: update_text_size(message_label), 0.1)
 
+    def on_copy_pressed(self, instance):
+        Clipboard.copy(self.message_text)
+
+    def on_link_press(self, instance, url:str):
+        webbrowser.open(url)
         
 class ChatHistory(ScrollView):
     """UI Component: Container for message history"""
@@ -307,10 +321,16 @@ class ImageChooserPopup(Popup):
 class ChatInterface(BoxLayout):
     """Main Controller: Orchestrates services and UI components"""
     
-    def __init__(self, **kwargs):
+    def __init__(self, cmdargs, **kwargs):
         # Initialize services BEFORE calling super() so they're available during KV loading
-        self.message_service = MessageService()
-        if USE_MOCK_SERVER:
+        self.cmdargs = cmdargs # argparse instance
+
+        if self.cmdargs.plain:
+            self.message_service = MessageService(processor_name='plain')
+        else:
+            self.message_service = MessageService(processor_name='mistune')
+
+        if self.cmdargs.mock:
             self.chatbot_service = MockChatBotService()
         else:
             self.chatbot_service = NlipChatBotService()
@@ -331,7 +351,7 @@ class ChatInterface(BoxLayout):
         
         # Add sample messages
         self._add_welcome_messages()
-        if USE_MOCK_SERVER:
+        if self.cmdargs.mock:
             self._add_sample_messages()
     
     def handle_send_message(self, message_text: str):
@@ -383,6 +403,7 @@ class ChatInterface(BoxLayout):
     
     def _add_welcome_messages(self):
         """Add sample messages to demonstrate the interface"""
+
         sample_data = [
             ("Hello! Welcome to the chat interface.", "text", None, "assistant"),
         ]
@@ -395,11 +416,52 @@ class ChatInterface(BoxLayout):
 
     def _add_sample_messages(self):
         """Add sample messages to demonstrate the interface"""
+
+        multiline = """The Weather Agent has provided the forecast for Juneau, Alaska:
+
+**Today:**
+- Temperature: 57°F
+- Wind: 10 to 15 mph from Southeast
+- Conditions: Rainy and cloudy
+- Precipitation: 90% chance with rainfall between 0.1-0.25 inches
+
+**Tonight:**
+- Temperature: Low around 50°F
+- Wind: 10 to 15 mph from East
+- Conditions: Rainy and cloudy
+- Precipitation: 100% chance with rainfall between 0.5-0.75 inches
+
+**Tuesday:**
+- Temperature: High near 62°F
+- Wind: 5 to 15 mph from East
+- Conditions: Rainy and cloudy
+- Precipitation: 100% chance with rainfall between 0.5-0.75 inches
+"""
+        multilinejson = """**Person:**
+``` json
+{
+  "name":"Fred",
+  "id": 1
+}
+```
+
+**Place:**
+``` json
+{
+  "location":"Madrid",
+  "id": 45
+}
+```"""
+        
         sample_data = [
             ("Connected to http://sample.com/", "text", None, "status"),
             ("Hi there! This looks great.", "text", None, "user"),
             ("This is a longer message to demonstrate how the text wrapping works in the message bubbles. As you can see, it automatically adjusts the height based on the content length.", "text", None, "assistant"),
             ("Perfect! The bubbles resize nicely and the text is easy to read.", "text", None, "user"),
+            ("What is the forecast for Juneau?", "text", None, "user"),
+            (multiline, "text", None, "assistant"),
+            ("What are the Domain Objects?", "text", None, "user"),
+            (multilinejson, "text", None, "assistant"),
         ]
         
         for content, msg_type, img_path, role in sample_data:
@@ -410,17 +472,17 @@ class ChatInterface(BoxLayout):
 
 class ChatApp(App):
     """Application entry point"""
+
+    def __init__(self, cmdargs, **kwargs):
+        super().__init__(**kwargs)
+        self.title = "Mach2" # the window title
+        self.cmdargs = cmdargs
     
     def build(self):
-        return ChatInterface()
+        return ChatInterface(self.cmdargs)
     
     def on_start(self):
         from kivy.core.window import Window
         Window.clearcolor = (1, 1, 1, 1)
 
-
-if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(ChatApp().async_run(async_lib='asyncio'))
-    loop.close()
     

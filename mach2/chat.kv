@@ -1,5 +1,21 @@
 # chat.kv
 
+<FixedSizeButton@Button>:
+    background_color: 0, 0, 0, 0 # initial background - clear so canvas can draw it
+
+    canvas.before:
+        Color:
+            rgba: (.8, .8, .8, 1) if self.state=='normal' else (0, .7, .7, 1) 
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            # radius is not device independent for some reason
+            radius: [ 5 ]
+
+    # Disable layout-based sizing
+    size_hint_x: None # disable auto sizing from layout
+    size_hint_y: None
+
 <MessageBubble>:
     orientation: 'horizontal'
     size_hint_y: None
@@ -30,15 +46,33 @@
                 size: self.size
                 radius: [15]
         
+        # Status Row
+        BoxLayout:
+            padding: '0sp', '0sp', '15sp', '0sp'
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: '20sp'
+
+            Widget:
+                # leading padding widget
+
+            FixedSizeButton:
+                id: click_to_copy
+                text: 'copy'
+                size: ('60sp', '20dp')
+                color: 0.4, 0.4, 0.4, 0.8
+                on_release: root.on_copy_pressed(self)
+
         # Padded container for content
         BoxLayout:
-            padding: '15sp', '10sp', '15sp', '10sp'
+            padding: '15sp', '0sp', '15sp', '10sp'
             orientation: 'vertical'
-            
+
             # Text content (always present)
             Label:
                 id: message_label
-                text: root.message_text
+                # show formatted version, else just plain content
+                text: root.message_formatted if root.message_formatted else root.message_text
                 font_size: '14sp'
                 text_size: self.width, None
                 halign: root.bubble_halign()
@@ -48,6 +82,8 @@
                 size_hint_y: None
                 height: self.texture_size[1]
                 opacity: 1 if root.message_type == "text" else 0.7
+                # handle hyperlinks to external browser from markup
+                on_ref_press: root.on_link_press(args[0], args[1])
             
             # Image content (only for image messages)
             Image:

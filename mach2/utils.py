@@ -87,9 +87,9 @@ def nlipMessageExtractParts(nlip_message: NLIP_Message):
         for msg in nlip_message.submessages: # sub-parts
             if msg.format == AllowedFormats.text:
                 s = msg.content
-                # Apply formatting if appropriate
-                if s.startswith("[Calling"):
-                    content += f"\n\n[b]{s}[/b]"
+                # Apply formatting to tools by recognizing basic_agent
+                if s.startswith("Calling tool"):
+                    content += f"\n\n**{s}**"
                 else:
                     content += f"\n\n{s}"
 
