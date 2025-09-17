@@ -13,6 +13,7 @@
 # Tom Sheffler (c) 2025
 
 from typing import Any, Dict, List, Optional, cast
+from kivy.utils import escape_markup # "[" to "&lb;"
 import mistune
 from mistune import BaseRenderer
 from mistune.core import BlockState, InlineState
@@ -72,7 +73,7 @@ class BBCodeRenderer(BaseRenderer):
     
     def text(self, token, state):
         """Render plain text"""
-        return token['raw']
+        return escape_markup(token['raw'])
 
     def block_text(self, token, state):
         children = self.render_children(token, state)
@@ -109,8 +110,10 @@ class BBCodeRenderer(BaseRenderer):
     
     def image(self, token, state):
         """Convert ![alt](url) to [img]url[/img]"""
+        children = self.render_children(token, state)
         url = token['attrs']['url']
-        return f"[img]{url}[/img]"
+        # return f"[img]{url}[/img]"
+        return f"[u][ref={url}]{children}[/ref][/u]"
     
     def codespan(self, token, state):
         """Convert `code` to [code]code[/code]"""
@@ -140,7 +143,7 @@ class BBCodeRenderer(BaseRenderer):
     def block_quote(self, token, state):
         """Convert > quotes to [quote] blocks"""
         children = self.render_children(token, state)
-        return f"[quote]\n{children.rstrip()}\n[/quote]\n"
+        return f"[color=#4444AA][i]\n{children.rstrip()}\n[/i][/color]\n"
 
     def _list_push(self, isOrdered):
 
@@ -184,7 +187,7 @@ class BBCodeRenderer(BaseRenderer):
         else:
 
             # all levels use same bullet for now
-            return "\u2022"
+            return BULLET
 
     
     def list_item(self, token, state, **attrs):
@@ -213,7 +216,7 @@ class BBCodeRenderer(BaseRenderer):
         self._list_push(ordered)
         children = self.render_children(token, state)
         self._list_pop()
-        return f"{children.rstrip()}\n\n"
+        return f"\n{children.rstrip()}\n\n"
         # return f"\n[list]\n{children.rstrip()}\n[/list]\n"
     
     def strikethrough(self, token, state):
@@ -363,6 +366,9 @@ def foo():
     3. this is an item
 
 ---
+
+Bracketed [words] and use of the left-bracket[ in ununusal places ].
+Kivy [b]markup inserted incorrectly.
 
 A checkmark: \u2713
 A bullet: \u2022 \N{BULLET}
