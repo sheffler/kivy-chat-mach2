@@ -10,8 +10,12 @@ from urllib.parse import urlparse
 from . import utils
 from .models import Message
 from .nlip_async_client import NlipAsyncClient
+from .authenticating_nlip_async_client import AuthenticatingNlipAsyncClient
 from .processors.plain_processor import PlainProcessor
 from .processors.mistune_processor import MistuneProcessor
+
+# login popup
+from .widgets.login_popup import LoginPopup, LoginCredentials
 
 #
 # Mock Chat Bot Service delivers canned responses.
@@ -57,7 +61,8 @@ class MockChatBotService:
 
         # Establish the URL and return a connection message
         await asyncio.sleep(1.0)
-        self.client = NlipAsyncClient.create_from_url(f"{scheme}://{netloc}/nlip/")   
+        # self.client = NlipAsyncClient.create_from_url(f"{scheme}://{netloc}/nlip/")   
+        self.client = AuthenticatingNlipAsyncClient.create_from_url(f"{scheme}://{netloc}/nlip/")   
         return f"Connected to {scheme}://{netloc}/"
                 
     
@@ -110,6 +115,25 @@ class MockChatBotService:
 # Server credentials must be set before use.
 #
 
+def on_login_elicitation(client):
+
+    print(f"SERVICES: ON_BASIC_ELICIATION:{client}")
+
+    from asyncio import Future
+    future = Future()
+
+    def handle_login_result(credentials: LoginCredentials):
+        username = credentials.username
+        password = credentials.password
+        future.set_result((username, password))
+
+    popup = LoginPopup(on_login_callback=handle_login_result)
+    popup.open()
+
+    return future
+
+
+
 class NlipChatBotService:
     """Service: Handles chatbot response generation"""
     
@@ -129,7 +153,9 @@ class NlipChatBotService:
 
         # Establish the URL and return a connection message
         await asyncio.sleep(1.0)
-        self.client = NlipAsyncClient.create_from_url(f"{scheme}://{netloc}/nlip/")   
+        # self.client = NlipAsyncClient.create_from_url(f"{scheme}://{netloc}/nlip/")   
+        self.client = AuthenticatingNlipAsyncClient.create_from_url(f"{scheme}://{netloc}/nlip/")
+        self.client.on_login_requested(on_login_elicitation)
         return f"Connected to {scheme}://{netloc}/"
 
     def error_connection_response(self):

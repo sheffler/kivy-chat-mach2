@@ -29,7 +29,7 @@ import webbrowser
 # local
 from . import utils
 from .models import Message
-from .widgets import TextInputWithShiftReturn
+from .widgets.text_input_with_shift_return import TextInputWithShiftReturn
 from .services import MockChatBotService, NlipChatBotService, MessageService
 
 # UI Components
