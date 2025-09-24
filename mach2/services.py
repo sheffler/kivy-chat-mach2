@@ -16,6 +16,7 @@ from .processors.mistune_processor import MistuneProcessor
 
 # login popup
 from .widgets.login_popup import LoginPopup, LoginCredentials
+from .widgets.bearer_popup import BearerPopup, BearerCredentials
 
 #
 # Mock Chat Bot Service delivers canned responses.
@@ -132,6 +133,22 @@ def on_login_elicitation(client):
 
     return future
 
+def on_bearer_elicitation(client):
+
+    print(f"SERVICES: ON_BEARER_ELICIATION:{client}")
+
+    from asyncio import Future
+    future = Future()
+
+    def handle_bearer_result(credentials: BearerCredentials):
+        bearer = credentials.bearer
+        future.set_result(bearer)
+
+    popup = BearerPopup(on_bearer_callback=handle_bearer_result)
+    popup.open()
+
+    return future
+
 
 
 class NlipChatBotService:
@@ -155,7 +172,9 @@ class NlipChatBotService:
         await asyncio.sleep(1.0)
         # self.client = NlipAsyncClient.create_from_url(f"{scheme}://{netloc}/nlip/")   
         self.client = AuthenticatingNlipAsyncClient.create_from_url(f"{scheme}://{netloc}/nlip/")
+        # register credential callbacks
         self.client.on_login_requested(on_login_elicitation)
+        self.client.on_bearer_requested(on_bearer_elicitation)
         return f"Connected to {scheme}://{netloc}/"
 
     def error_connection_response(self):

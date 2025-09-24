@@ -13,6 +13,7 @@ class AuthenticatingNlipAsyncClient:
         self.recursion = 0
 
         self.on_login_elicitation = None  # obtain username/password
+        self.on_bearer_elicitation = None # obtain bearer token
 
     # add basic auth to the client and recreate it
     def add_basic_auth(self, username: str, password: str):
@@ -23,6 +24,11 @@ class AuthenticatingNlipAsyncClient:
     def add_digest_auth(self, username: str, password: str):
         auth = httpx.DigestAuth(username=username, password=password)
         self.client = httpx.AsyncClient(auth=auth)
+
+    # add digest auth to the client and recreate it
+    def add_bearer_token(self, bearer: str):
+        headers = { "Authorization" : f"Bearer {bearer}" }
+        self.client = httpx.AsyncClient(headers=headers)
 
     # register an elicitation for username/password
     def on_login_requested(self, on_login_elicitation):
@@ -38,6 +44,21 @@ class AuthenticatingNlipAsyncClient:
         else:
             print(f"NO LOGIN HANDLER REGISTERED")
             return ("", "")
+
+    # register an elicitation for username/password
+    def on_bearer_requested(self, on_bearer_elicitation):
+        print(f"ON BEARER REQUESTED")
+        self.on_bearer_elicitation = on_bearer_elicitation
+
+    # call the elicitation and get the credentials
+    async def elicit_bearer_credentials(self):
+        print(f"ELICIT BEARER CREDENTIALS")
+        if self.on_bearer_elicitation:
+            bearer = await self.on_bearer_elicitation(self)
+            return bearer
+        else:
+            print(f"NO BEARER HANDLER REGISTERED")
+            return ""
 
     @classmethod
     def create_from_url(cls, base_url:str):
@@ -80,6 +101,10 @@ class AuthenticatingNlipAsyncClient:
                             future = self.elicit_login_credentials()
                             (username, password) = await future
                             self.add_digest_auth(username, password)
+                        elif scheme.startswith('Bearer'):
+                            future = self.elicit_bearer_credentials()
+                            bearer = await future
+                            self.add_bearer_token(bearer)
                         else:
                             raise Exception(f"Unrecognized header: www-authenticate:{scheme}")
 
