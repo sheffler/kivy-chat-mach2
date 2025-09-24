@@ -134,7 +134,7 @@ class BearerPopup(Popup):
 
 #
 # Standalone components testing.  Run this like
-#   python -m mach2.widgets.login_popup
+#   python -m mach2.widgets.bearer_popup
 #
 
 
