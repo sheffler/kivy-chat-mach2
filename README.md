@@ -87,7 +87,7 @@ By default, Mach2 processes each LLM response with a Markdown parser and code fo
 ![Markdown](pics/mach2-with-formatted-markdown-01.png)
 
 
-Mach2 responds to `401 Unauthorized` responses to a protected NLIP server and can present modal dialogs to request credentials from a user.  For `Basic` and `Digest` authentication schemes, Mach2 will present the Login Dialog shown below.
+Mach2 responds to `401 Unauthorized` responses from a protected NLIP server and can present modal dialogs to request credentials from a user.  For `Basic` and `Digest` authentication schemes, Mach2 will present the Login Dialog shown below.
 
 ![](pics/login-popup.png)
 
