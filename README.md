@@ -49,7 +49,7 @@ This project works well with `uv`.
 
 By default, the app will connect to the server connection configured in the top input area.  You should enter a string like `http://localhost:8000`, where your NLIP server is listening.  Press `[RETURN]`.
 
-Enter text messages in the Message area.  To send a text-only message, press the `[Send]` button.  You may also press `[SHIFT+RETURN]` to complete a text message.
+Enter text messages in the Message area.  To send a text-only message, press the `[Send]` button or the `[RETURN]` key.  You may also press `[SHIFT+RETURN]` to insert a blank line.
 
 To send a message that includes text and an image, first enter the text and then use the `[Send+Image]` button to add an image to the message and then send it.
 
