@@ -1,6 +1,14 @@
 from dataclasses import dataclass
 from typing import Optional
 from datetime import datetime
+from enum import StrEnum
+
+class Roles(StrEnum):
+    USER = "user"
+    ASSISTANT = "assistant"
+    SYSTEM = "system"
+    STATUS = "status"
+    WARNING = "warning"
 
 
 # Domain Models
