@@ -21,7 +21,6 @@ from kivy.uix.filechooser import FileChooserIconView
 from kivy.uix.popup import Popup
 from kivy.properties import StringProperty, BooleanProperty, ObjectProperty
 from kivy.metrics import sp
-import random
 import os
 import asyncio
 import webbrowser
