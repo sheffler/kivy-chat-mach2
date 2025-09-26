@@ -1,5 +1,5 @@
 
-# NLIP Kivy Client
+# Mach2: NLIP Chat App built with Kivy
 
 Mach2 is a chat client built using Kivy and speaking [NLIP](https://github.com/nlip-project) protocol.  It can send and receive:
 
