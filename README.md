@@ -1,12 +1,12 @@
 
-# NLIP Kivy Client
+# Mach2: NLIP Chat App built with Kivy
 
-Chat client built using Kivy and speaking [NLIP](https://github.com/nlip-project) protocol on the rear.  It can send and receive:
+Mach2 is a chat client built using Kivy and speaking [NLIP](https://github.com/nlip-project) protocol.  It can send and receive:
 
 - text
 - images
 
-By default, it renders LLM responses in rich text with hyperlinks enabled.
+By default, it renders LLM responses in rich text with hyperlinks enabled.  Mach2 is lightweight, and designed to be easily modifiable by developers for new use cases.
 
 ![Mach2 Screenshot](pics/mach2-1.png)
 
@@ -49,7 +49,7 @@ This project works well with `uv`.
 
 By default, the app will connect to the server connection configured in the top input area.  You should enter a string like `http://localhost:8000`, where your NLIP server is listening.  Press `[RETURN]`.
 
-Enter text messages in the Message area.  To send a text-only message, press the `[Send]` button.  You may also press `[SHIFT+RETURN]` to complete a text message.
+Enter text messages in the Message area.  To send a text-only message, press the `[Send]` button or the `[RETURN]` key.  You may also press `[SHIFT+RETURN]` to insert a blank line.
 
 To send a message that includes text and an image, first enter the text and then use the `[Send+Image]` button to add an image to the message and then send it.
 
@@ -85,3 +85,15 @@ An NLIP message stream is used to send and receive text messages augmented with 
 By default, Mach2 processes each LLM response with a Markdown parser and code formatter.  This capability may be turned off with the "-p" (plain) flag.
 
 ![Markdown](pics/mach2-with-formatted-markdown-01.png)
+
+
+Mach2 responds to `401 Unauthorized` responses from a protected NLIP server and can present modal dialogs to request credentials from a user.  For `Basic` and `Digest` authentication schemes, Mach2 will present the Login Dialog shown below.
+
+![](pics/login-popup.png)
+
+For protected servers that respond with a `401 Unauthorized` and the `Bearer` authentication scheme, Mach2 will present the Bearer Dialog shown below.
+
+Note: at the current time Mach2 does not implement a full Oauth2 flow to create a Bearer token, but given that one is available, this is how to add it to the session.
+
+
+![](pics/bearer-popup.png)

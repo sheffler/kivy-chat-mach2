@@ -28,8 +28,8 @@ import webbrowser
 
 # local
 from . import utils
-from .models import Message
-from .widgets import TextInputWithShiftReturn
+from .models import Message, Roles
+from .widgets.text_input_with_shift_return import TextInputWithShiftReturn
 from .services import MockChatBotService, NlipChatBotService, MessageService
 
 # UI Components
@@ -39,7 +39,7 @@ class MessageBubble(BoxLayout):
     message_formatted = StringProperty(None) # default value
     message_type = StringProperty("text")
     image_source = StringProperty("")
-    role = StringProperty("user")
+    role = StringProperty(Roles.USER)
     
     def __init__(self, message: Message, **kwargs):
         self.message_text = message.content
@@ -59,15 +59,15 @@ class MessageBubble(BoxLayout):
 
     # Left spacer properties
     def left_size_hint_x(self):
-        if self.role == "user":
+        if self.role == Roles.USER:
             return 0.3
-        elif self.role == "assistant":
+        elif self.role == Roles.ASSISTANT:
             return 0
-        elif self.role == "system":
+        elif self.role == Roles.SYSTEM:
             return 0.25
-        elif self.role == "status":
+        elif self.role == Roles.STATUS:
             return 0.25
-        elif self.role == "warning":
+        elif self.role == Roles.WARNING:
             return 0.25
         else:
             return 0.15
@@ -77,15 +77,15 @@ class MessageBubble(BoxLayout):
 
     # Right space properties
     def right_size_hint_x(self):
-        if self.role == "user":
+        if self.role == Roles.USER:
             return 0
-        elif self.role == "assistant":
+        elif self.role == Roles.ASSISTANT:
             return 0.3
-        elif self.role == "system":
+        elif self.role == Roles.SYSTEM:
             return 0.25
-        elif self.role == "status":
+        elif self.role == Roles.STATUS:
             return 0.25
-        elif self.role == "warning":
+        elif self.role == Roles.WARNING:
             return 0.25
         else:
             return 0.15
@@ -95,44 +95,44 @@ class MessageBubble(BoxLayout):
 
     # Message
     def message_size_hint_x(self):
-        if self.role == "user":
+        if self.role == Roles.USER:
             return 0.7
-        elif self.role == "assistant":
+        elif self.role == Roles.ASSISTANT:
             return 0.7
-        elif self.role == "system":
+        elif self.role == Roles.SYSTEM:
             return 0.5
-        elif self.role == "status":
+        elif self.role == Roles.STATUS:
             return 0.5
-        elif self.role == "warning":
+        elif self.role == Roles.WARNING:
             return 0.5
         else:
             return 0.7
 
     # Bubble color
     def bubble_color(self):
-        if self.role == "user":
+        if self.role == Roles.USER:
             return (0.85, 0.92, 1, 1)
-        elif self.role == "assistant":
+        elif self.role == Roles.ASSISTANT:
             return (0.95, 0.95, 0.95, 1)
-        elif self.role == "system":
+        elif self.role == Roles.SYSTEM:
             return (0.85, 0.95, 0.85, 1)
-        elif self.role == "status":
+        elif self.role == Roles.STATUS:
             return (0.85, 0.95, 0.85, 1)
-        elif self.role == "warning":
+        elif self.role == Roles.WARNING:
             return (0.95, 0.85, 0.85, 1)
         else:
             return (0.85, 0.85, 0.85, 1)
 
     def bubble_halign(self):
-        if self.role == "user":
+        if self.role == Roles.USER:
             return "right"
-        elif self.role == "assistant":
+        elif self.role == Roles.ASSISTANT:
             return "left"
-        elif self.role == "system":
+        elif self.role == Roles.SYSTEM:
             return "center"
-        elif self.role == "status":
+        elif self.role == Roles.STATUS:
             return "center"
-        elif self.role == "warning":
+        elif self.role == Roles.WARNING:
             return "center"
         else:
             return "center"
@@ -239,9 +239,9 @@ class UrlInput(BoxLayout):
             # await self.chatbot_service.connect_to_server(instance.text)
             try:
                 await self.chatbot_service.connect_to_server(instance.text)
-                self.message_service.create_text_message(f"Connected to {instance.text}", role="status")
+                self.message_service.create_text_message(f"Connected to {instance.text}", role=Roles.STATUS)
             except Exception as e:
-                self.message_service.create_text_message(f"Exception: {e}", role="warning")
+                self.message_service.create_text_message(f"Exception: {e}", role=Roles.WARNING)
 
         asyncio.create_task(doit())
 
@@ -357,14 +357,14 @@ class ChatInterface(BoxLayout):
     def handle_send_message(self, message_text: str):
         """Handle sending a new text message"""
         # Create user message through service
-        user_message = self.message_service.create_text_message(message_text, role="user")
+        user_message = self.message_service.create_text_message(message_text, role=Roles.USER)
 
         async def doit():
             response_text , image_path = await self.chatbot_service.generate_response(user_message)
             if image_path == None:
-                self.message_service.create_text_message(response_text, role="assistant")
+                self.message_service.create_text_message(response_text, role=Roles.ASSISTANT)
             else:
-                self.message_service.create_image_message(response_text, image_path, role="assistant")
+                self.message_service.create_image_message(response_text, image_path, role=Roles.ASSISTANT)
 
         asyncio.create_task(doit())
         
@@ -383,15 +383,15 @@ class ChatInterface(BoxLayout):
         user_message = self.message_service.create_image_message(
             content= default_content if len(explicit_content) == 0 else explicit_content,
             image_path=image_path,
-            role="user"
+            role=Roles.USER
         )
 
         async def doit():
             response_text, image_path = await self.chatbot_service.generate_response(user_message)
             if image_path == None:
-                self.message_service.create_text_message(response_text, role="assistant")
+                self.message_service.create_text_message(response_text, role=Roles.ASSISTANT)
             else:
-                self.message_service.create_image_message(response_text, image_path, role="assistant")
+                self.message_service.create_image_message(response_text, image_path, role=Roles.ASSISTANT)
         
         asyncio.create_task(doit())
 
@@ -399,13 +399,13 @@ class ChatInterface(BoxLayout):
     def _generate_bot_response(self, user_message: Message):
         """Generate and send bot response"""
         response_text = self.chatbot_service.generate_response(user_message)
-        self.message_service.create_text_message(response_text, role="assistant")
+        self.message_service.create_text_message(response_text, role=Roles.ASSISTANT)
     
     def _add_welcome_messages(self):
         """Add sample messages to demonstrate the interface"""
 
         sample_data = [
-            ("Hello! Welcome to the chat interface.", "text", None, "assistant"),
+            ("Hello! Welcome to the chat interface.", "text", None, Roles.ASSISTANT),
         ]
         
         for content, msg_type, img_path, role in sample_data:
@@ -454,14 +454,14 @@ class ChatInterface(BoxLayout):
 ```"""
         
         sample_data = [
-            ("Connected to http://sample.com/", "text", None, "status"),
-            ("Hi there! This looks great.", "text", None, "user"),
-            ("This is a longer message to demonstrate how the text wrapping works in the message bubbles. As you can see, it automatically adjusts the height based on the content length.", "text", None, "assistant"),
-            ("Perfect! The bubbles resize nicely and the text is easy to read.", "text", None, "user"),
-            ("What is the forecast for Juneau?", "text", None, "user"),
-            (multiline, "text", None, "assistant"),
-            ("What are the Domain Objects?", "text", None, "user"),
-            (multilinejson, "text", None, "assistant"),
+            ("Connected to http://sample.com/", "text", None, Roles.STATUS),
+            ("Hi there! This looks great.", "text", None, Roles.USER),
+            ("This is a longer message to demonstrate how the text wrapping works in the message bubbles. As you can see, it automatically adjusts the height based on the content length.", "text", None, Roles.ASSISTANT),
+            ("Perfect! The bubbles resize nicely and the text is easy to read.", "text", None, Roles.USER),
+            ("What is the forecast for Juneau?", "text", None, Roles.USER),
+            (multiline, "text", None, Roles.ASSISTANT),
+            ("What are the Domain Objects?", "text", None, Roles.USER),
+            (multilinejson, "text", None, Roles.ASSISTANT),
         ]
         
         for content, msg_type, img_path, role in sample_data:

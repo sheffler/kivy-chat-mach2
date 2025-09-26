@@ -4,6 +4,7 @@
 #
 
 from ..renderers.kivy_mistune_bbcode import MarkdownToBBCodeParser
+from ..models import Roles
 
 class MistuneProcessor:
 
@@ -12,7 +13,7 @@ class MistuneProcessor:
 
     def process(self, content: str, role: str):
 
-        if role == 'assistant':
+        if role == Roles.ASSISTANT:
 
             processed = self.renderer.parse(content)
 
