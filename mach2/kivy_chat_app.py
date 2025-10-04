@@ -475,6 +475,7 @@ class ChatApp(App):
     def __init__(self, cmdargs, **kwargs):
         super().__init__(**kwargs)
         self.title = "Mach2" # the window title
+        self.icon = 'resources/mach2A.png'
         self.cmdargs = cmdargs
     
     def build(self):

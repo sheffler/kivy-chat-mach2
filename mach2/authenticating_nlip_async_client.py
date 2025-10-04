@@ -1,6 +1,8 @@
 #
 # An NLIP client that uses a 401 response to query the user for authenticaiton
 #
+# RFC2617 Sect 1.2 states that "if a prior request has been authorized" ... the same credentials
+# may be reused.
 
 import httpx
 from nlip_sdk.nlip import NLIP_Message
